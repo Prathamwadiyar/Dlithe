@@ -1,0 +1,307 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>SkillPulse Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+  <style>
+    :root{--bg:#05060b;--card:#0d1620;--accent:#00d4ff;--accent2:#7c5cff;--muted:#9aa4c0}
+    *{box-sizing:border-box}
+    body{margin:0;background:linear-gradient(180deg,var(--bg),#071227);color:#e6eef8;font-family:Inter,system-ui,Segoe UI,Roboto,Arial}
+    .wrap{max-width:1200px;margin:18px auto;padding:18px}
+    header{display:flex;justify-content:space-between;align-items:center;gap:12px}
+    .crumbs{color:var(--muted)}
+    .top-actions{display:flex;gap:8px} 
+    .btn{background:linear-gradient(90deg,var(--accent2),var(--accent));border:none;padding:10px 14px;border-radius:8px;color:#021028;font-weight:700;cursor:pointer}
+    .card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));padding:14px;border-radius:12px;border:1px solid rgba(255,255,255,0.02)}
+    .grid{display:grid;grid-template-columns:repeat(12,1fr);gap:14px;margin-top:14px}
+    .col-3{grid-column:span 3}
+    .col-6{grid-column:span 6}
+    .col-12{grid-column:span 12}
+    table{width:100%;border-collapse:collapse;margin-top:8px}
+    th,td{padding:10px;text-align:left;border-bottom:1px solid rgba(255,255,255,0.03)}
+    th{background:rgba(255,255,255,0.01)}
+    input[type=search]{padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:inherit}
+    .muted{color:var(--muted);font-size:13px}
+    @media(max-width:980px){ .grid{grid-template-columns:1fr} .col-6,.col-3,.col-12{grid-column:span 1} }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div>
+        <div style="font-weight:800;font-size:20px">SkillPulse — Dashboard</div>
+        <div class="crumbs">Home • Dashboard</div>
+      </div>
+      <div class="top-actions">
+        <input id="search" type="search" placeholder="Search worker or skill..." aria-label="Search">
+        <button id="voiceBtn" class="btn">Voice Filter</button>
+        <button id="exportPdf" class="btn">Export Report</button>
+        <a class="btn" href="index.html" style="text-decoration:none">Back to Site</a>
+      </div>
+    </header>
+
+    <main>
+      <div class="grid">
+        <!-- Worker performance table -->
+        <div class="col-6 card" style="padding:12px">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div><strong>Worker Performance</strong><div class="muted">Sortable, search and rating</div></div>
+            <div class="muted">Updated live</div>
+          </div>
+
+          <table id="workersTbl" aria-describedby="workerList">
+            <thead><tr><th data-key="name">Name ▲</th><th data-key="role">Role</th><th data-key="prod">Productivity</th><th data-key="skills">Top Skills</th></tr></thead>
+            <tbody id="workersBody"></tbody>
+          </table>
+        </div>
+
+        <!-- skill utilization donut + bar -->
+        <div class="col-6 card" style="padding:12px">
+          <strong>Skill Utilization</strong>
+          <div class="muted">Distribution and trends</div>
+          <canvas id="skillDonut" style="margin-top:12px"></canvas>
+          <div style="height:10px"></div>
+          <canvas id="skillBar" style="margin-top:12px"></canvas>
+        </div>
+
+        <!-- Productivity metrics -->
+        <div class="col-12 card">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div><strong>Productivity Metrics</strong><div class="muted">Live series, compare teams</div></div>
+            <div class="muted">Last 30 days</div>
+          </div>
+          <canvas id="prodLine" style="margin-top:12px"></canvas>
+        </div>
+
+        <!-- Heatmap and decision support -->
+        <div class="col-6 card">
+          <strong>Peak Performance Heatmap</strong>
+          <div class="muted">Hour vs Team activity</div>
+          <canvas id="heatmap" style="margin-top:12px"></canvas>
+        </div>
+
+        <div class="col-6 card">
+          <strong>Decision Support</strong>
+          <div class="muted">Actionable insights & training</div>
+          <div id="decisions" style="margin-top:12px"></div>
+          <div style="margin-top:12px"><button id="applyDec" class="btn">Apply Top Recommendation</button></div>
+        </div>
+
+        <!-- Training recommendation mock -->
+        <div class="col-12 card">
+          <strong>Training Recommendation Engine (mock)</strong>
+          <div class="muted">Describe a gap and get suggestions</div>
+          <div style="margin-top:8px;display:flex;gap:8px">
+            <input id="gap" placeholder="e.g. SQL optimization or React perf" style="flex:1;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:inherit"/>
+            <button id="suggest" class="btn">Suggest</button>
+          </div>
+          <div id="suggestions" style="margin-top:12px"></div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <!-- libs -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+  <script>
+    /* -------------------------
+       Dummy data generation
+       ------------------------- */
+    const SKILLS = ['React','Node','Python','SQL','Design','Cloud','QA','ML','Kotlin','Go'];
+    const ROLES = ['Engineer','Designer','Data Analyst','QA','DevOps','Product'];
+    const WORKERS = [];
+    for(let i=1;i<=60;i++){
+      const picks = [];
+      picks.push(SKILLS[i % SKILLS.length]);
+      picks.push(SKILLS[(i+3) % SKILLS.length]);
+      const prod = Math.round(35 + Math.random()*60);
+      WORKERS.push({
+        id:'w'+i,
+        name: ['Arun','Samyuktha','Riya','Naina','Rahul','Isha','Kailash','Dev'][i%8] + ' ' + i,
+        role: ROLES[i%ROLES.length],
+        prod,
+        skills: picks,
+        lastActive: Math.round(Math.random()*24)
+      });
+    }
+
+    const workersBody = document.getElementById('workersBody');
+    let currentSort = {key:'name', dir:1};
+    let filterText = '';
+
+    function renderWorkers(){
+      const filtered = WORKERS.filter(w => (w.name + ' ' + w.role + ' ' + w.skills.join(' ')).toLowerCase().includes(filterText.toLowerCase()));
+      filtered.sort((a,b)=> {
+        const k = currentSort.key;
+        if(k === 'prod') return (a.prod - b.prod)*currentSort.dir;
+        return a[k] > b[k] ? currentSort.dir : -currentSort.dir;
+      });
+      workersBody.innerHTML = filtered.map(w=>`
+        <tr>
+          <td>${w.name}</td>
+          <td>${w.role}</td>
+          <td>${renderStars(w.prod)} ${w.prod}%</td>
+          <td>${w.skills.join(', ')}</td>
+        </tr>
+      `).join('');
+    }
+    function renderStars(p){
+      const s = Math.round((p / 100) * 5);
+      return '★'.repeat(s) + '☆'.repeat(5-s);
+    }
+    document.getElementById('search').addEventListener('input', (e)=>{ filterText = e.target.value; renderWorkers(); });
+    document.querySelectorAll('th[data-key]').forEach(th=>{
+      th.style.cursor='pointer';
+      th.addEventListener('click', ()=>{ const k = th.getAttribute('data-key'); if(currentSort.key===k) currentSort.dir *= -1; else { currentSort.key = k; currentSort.dir = 1;} renderWorkers(); });
+    });
+    renderWorkers();
+
+    /* -------------------------
+       Skill charts: donut + bar
+       ------------------------- */
+    const skillCounts = SKILLS.reduce((acc,s)=>{ acc[s]=0; return acc; }, {});
+    WORKERS.forEach(w=> w.skills.forEach(s=> skillCounts[s]++));
+    const skillLabels = Object.keys(skillCounts);
+    const skillData = Object.values(skillCounts);
+
+    const dctx = document.getElementById('skillDonut').getContext('2d');
+    const skillDonut = new Chart(dctx, { type:'doughnut', data:{labels:skillLabels,datasets:[{data:skillData}]}, options:{plugins:{legend:{position:'bottom'}} } });
+
+    const bctx = document.getElementById('skillBar').getContext('2d');
+    const skillBar = new Chart(bctx, { type:'bar', data:{labels:skillLabels,datasets:[{label:'Utilization',data:skillData, borderWidth:0}]}, options:{indexAxis:'y',plugins:{legend:{display:false}} } });
+
+    /* -------------------------
+       Productivity metrics: line (live mock)
+       ------------------------- */
+    const prodCtx = document.getElementById('prodLine').getContext('2d');
+    const prodLabels = Array.from({length:30}, (_,i)=>`Day ${i+1}`);
+    const prodSeries = Array.from({length:30}, ()=>Math.round(60 + Math.random()*30));
+    const prodChart = new Chart(prodCtx, { type:'line', data:{labels:prodLabels,datasets:[{label:'Avg Productivity',data:prodSeries,borderColor:'#7c5cff',backgroundColor:'rgba(124,92,255,0.12)',tension:0.3}] }, options:{responsive:true,scales:{y:{beginAtZero:true}}} });
+
+    setInterval(()=> {
+      prodChart.data.labels.push('D' + (prodChart.data.labels.length+1));
+      prodChart.data.labels.shift();
+      prodChart.data.datasets[0].data.push(Math.round(55 + Math.random()*35));
+      prodChart.data.datasets[0].data.shift();
+      prodChart.update();
+    },3500);
+
+    /* -------------------------
+       Heatmap (simple matrix rendered to canvas)
+       ------------------------- */
+    const heatCtx = document.getElementById('heatmap').getContext('2d');
+    // teams x hours sample
+    const teams = ['Frontend','Backend','Data','Design','QA'];
+    const hours = Array.from({length:12}, (_,i)=>i*2); // 0,2,4...
+    const heatData = teams.map(()=> Array.from({length:hours.length}, ()=>Math.round(Math.random()*100)));
+    // render as simple colored squares
+    function drawHeat(){
+      const w = heatCtx.canvas.width = 560;
+      const h = heatCtx.canvas.height = 220;
+      const cellW = Math.floor(w / hours.length);
+      const cellH = Math.floor(h / teams.length);
+      heatCtx.clearRect(0,0,w,h);
+      for(let r=0;r<teams.length;r++){
+        for(let c=0;c<hours.length;c++){
+          const v = heatData[r][c];
+          const alpha = 0.15 + (v/100)*0.85;
+          heatCtx.fillStyle = `rgba(0,212,255,${alpha})`;
+          heatCtx.fillRect(c*cellW, r*cellH, cellW-2, cellH-2);
+        }
+      }
+      // overlay labels
+      heatCtx.fillStyle='#cfe8ff'; heatCtx.font='13px Inter';
+      for(let r=0;r<teams.length;r++) heatCtx.fillText(teams[r], 6, r*cellH + 16);
+      for(let c=0;c<hours.length;c++) heatCtx.fillText(hours[c]+'h', c*cellW+6, h-6);
+    }
+    drawHeat();
+
+    /* -------------------------
+       Decision Support generation
+       ------------------------- */
+    const decisionsEl = document.getElementById('decisions');
+    function computeDecisions(){
+      // simple heuristics
+      const lowProd = WORKERS.filter(w=> w.prod < 60).slice(0,4);
+      const topSkills = Object.entries(skillCounts).sort((a,b)=>b[1]-a[1]).slice(0,3);
+      const recs = [
+        {title:'Upskill Backend', desc:`Focus 4 backend engineers on SQL & optimization. Expected +8% productivity.`},
+        {title:'Add QA', desc:'Hire 1 QA resource to reduce bug backlog. Expected -15% test time.'},
+        {title:'Design System Training', desc:'Two designers to lead a systems workshop.'}
+      ];
+      decisionsEl.innerHTML = recs.map(r=>`<div style="margin-top:8px"><strong>${r.title}</strong><div class="muted">${r.desc}</div></div>`).join('');
+    }
+    computeDecisions();
+
+    document.getElementById('applyDec').addEventListener('click', ()=>{ alert('Applied top recommendation (mock).'); confettiSimple(); });
+
+    function confettiSimple(){ // small fallback if no library
+      const canvas = document.createElement('canvas'); canvas.style.position='fixed'; canvas.style.left=0; canvas.style.top=0; canvas.width=window.innerWidth; canvas.height=window.innerHeight; canvas.style.zIndex=9999; document.body.appendChild(canvas);
+      const ctx = canvas.getContext('2d');
+      const parts = [];
+      for(let i=0;i<80;i++) parts.push({x:Math.random()*canvas.width,y:Math.random()*-canvas.height,vy:2+Math.random()*6,sz:4+Math.random()*8,c:`hsl(${Math.random()*360} 70% 60%)`});
+      function loop(){
+        ctx.clearRect(0,0,canvas.width,canvas.height);
+        parts.forEach(p=>{ p.y += p.vy; ctx.fillStyle = p.c; ctx.fillRect(p.x,p.y,p.sz,p.sz); });
+        requestAnimationFrame(loop);
+      }
+      loop();
+      setTimeout(()=>canvas.remove(),1200);
+    }
+
+    /* -------------------------
+       Training suggestion mock
+       ------------------------- */
+    document.getElementById('suggest').addEventListener('click', ()=>{
+      const q = document.getElementById('gap').value.trim();
+      const out = document.getElementById('suggestions');
+      if(!q){ out.innerHTML = '<div class="muted">Type a gap to get suggestions.</div>'; return; }
+      const options = [
+        {name:`Advanced ${q} Patterns`, platform:'Coursera', duration:'4 weeks', impact:Math.round(6+Math.random()*12)},
+        {name:`Practical ${q} Projects`, platform:'Udemy', duration:'6 weeks', impact:Math.round(5+Math.random()*10)}
+      ];
+      out.innerHTML = options.map(o=>`<div style="margin-top:8px" class="card"><div style="display:flex;justify-content:space-between"><div><strong>${o.name}</strong><div class="muted">${o.platform} • ${o.duration}</div></div><div style="text-align:right;font-weight:800">Impact: +${o.impact}%</div></div><div style="margin-top:8px"><button class="btn" onclick="startMock('${o.name}')">Start</button></div></div>`).join('');
+    });
+    function startMock(name){ alert('Started '+name+' (mock).'); }
+
+    /* -------------------------
+       Export PDF
+       ------------------------- */
+    document.getElementById('exportPdf').addEventListener('click', async ()=>{
+      const el = document.querySelector('.wrap');
+      const canvas = await html2canvas(el, {scale:1.4});
+      const { jsPDF } = window.jspdf;
+      const pdf = new jsPDF({orientation:'portrait',unit:'px',format:[canvas.width, canvas.height]});
+      pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, canvas.width, canvas.height);
+      pdf.save('skillpulse-dashboard.pdf');
+    });
+
+    /* -------------------------
+       Voice filter (SpeechRecognition)
+       ------------------------- */
+    document.getElementById('voiceBtn').addEventListener('click', ()=>{
+      if(!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) return alert('Voice not supported in this browser.');
+      const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+      const r = new SR();
+      r.lang = 'en-US'; r.interimResults = false; r.maxAlternatives = 1;
+      r.onresult = (e)=> {
+        const t = e.results[0][0].transcript.toLowerCase();
+        document.getElementById('search').value = t;
+        filterText = t; renderWorkers();
+        alert('Voice filter: ' + t);
+      };
+      r.onerror = ()=> alert('Voice error');
+      r.start();
+    });
+    function confettiSimple(){ }
+
+    window.startMock = startMock;
+
+  </script>
+</body>
+</html>

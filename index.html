@@ -1,0 +1,341 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>SkillPulse — Real-time Skill & Productivity Dashboard</title>
+  <meta name="description" content="SkillPulse — Real-time workforce skill tracking with 3D galaxy, parallax, live charts, AI-style training recommendations, voice commands and export.">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+  <!-- Swiper -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@9/swiper-bundle.min.css"/>
+  <style>
+    :root{
+      --bg:#04060a; --card:#0e1520; --accent1:#7c5cff; --accent2:#00d4ff; --muted:#9aa4c0;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;background:
+      radial-gradient(800px 400px at 10% 10%, rgba(124,92,255,0.06), transparent),
+      radial-gradient(700px 300px at 90% 90%, rgba(0,212,255,0.03), transparent),
+      var(--bg); color:#e6eef8; font-family:Inter,system-ui,Segoe UI,Roboto,Arial}
+    a{color:inherit}
+    .container{max-width:1200px;margin:0 auto;padding:28px;position:relative;z-index:2}
+    header.topbar{display:flex;align-items:center;justify-content:space-between;padding:16px 0}
+    .brand{display:flex;align-items:center;gap:14px}
+    .logo{width:46px;height:46px;border-radius:8px;background:linear-gradient(135deg,var(--accent1),var(--accent2));display:flex;align-items:center;justify-content:center;font-weight:800;color:#021028}
+    nav a{margin-left:18px;color:var(--muted);text-decoration:none}
+    nav a:hover{color:var(--accent1)} 
+
+    /* Hero */
+    .hero{position:relative;min-height:90vh;display:flex;align-items:center;gap:20px;padding:40px;border-radius:24px;overflow:hidden;background:rgba(255,255,255,0.02);box-shadow:0 0 40px rgba(0,0,0,0.5)}
+    .hero::before{content:"";position:absolute;inset:0;background:rgba(4,6,10,0.7);z-index:1}
+    .hero video{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;opacity:0.25;z-index:0}
+    .hero .left{flex:1;z-index:2;position:relative}
+    .hero h1{font-size:clamp(30px,5vw,54px);margin:0;line-height:1.02;letter-spacing:-0.02em;font-weight:800;background:linear-gradient(90deg,var(--accent2),var(--accent1));-webkit-background-clip:text;background-clip:text;color:transparent}
+    .hero p{color:var(--muted);max-width:58ch}
+    .cta{margin-top:18px;display:flex;gap:12px}
+    .btn{background:linear-gradient(90deg,var(--accent1),var(--accent2));border:none;padding:12px 18px;border-radius:999px;color:#021;cursor:pointer}
+    .btn.alt{background:transparent;border:1px solid rgba(255,255,255,0.1);color:var(--muted)}
+    .stats{margin-top:20px;display:flex;gap:12px;flex-wrap:wrap;z-index:2;position:relative}
+    .stat{background:rgba(255,255,255,0.03);padding:12px;border-radius:10px;min-width:140px;text-align:center}
+    .small{font-size:13px;color:var(--muted)} 
+
+    /* sections */
+    section{padding:48px 0;border-top:1px solid rgba(255,255,255,0.03)}
+    h2{font-size:20px;margin:0 0 18px}
+    .grid{display:grid;grid-template-columns:repeat(12,1fr);gap:18px}
+    .col-7{grid-column:span 7}
+    .col-5{grid-column:span 5}
+    .col-4{grid-column:span 4}
+    .card{background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.02));padding:18px;border-radius:12px;border:1px solid rgba(255,255,255,0.02)}
+    .muted{color:var(--muted);font-size:13px}
+
+    /* Join Beta */
+    .join-beta{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+    .join-beta input{padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.06);background:transparent;color:inherit;min-width:240px}
+    .join-note{font-size:13px;color:var(--muted);margin-top:8px}
+
+    /* Swiper testimonial */
+    .swiper { width:100%; padding:12px 6px }
+    .testimonial { padding:16px; border-radius:12px; background:rgba(255,255,255,0.02); min-height:120px; display:flex;flex-direction:column; gap:8px; justify-content:center }
+    .t-author{font-weight:800}
+    .t-role{color:var(--muted);font-size:13px}
+
+    /* Quote bar */
+    .quote-bar{position:relative;margin:18px 0;padding:10px 14px;border-radius:10px;background:linear-gradient(90deg,rgba(124,92,255,0.06),rgba(0,212,255,0.02));display:flex;align-items:center;gap:12px}
+    .quote-icon{width:36px;height:36;border-radius:8px;background:linear-gradient(90deg,var(--accent1),var(--accent2));display:flex;align-items:center;justify-content:center;color:#021;font-weight:800}
+
+    /* PulseBot easter egg */
+    .pulsebot {
+      position:fixed;right:18px;bottom:18px;z-index:999;display:flex;flex-direction:column;align-items:flex-end;gap:8px;
+    }
+    .pulsebot .bubble {
+      width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,var(--accent1),var(--accent2));display:flex;align-items:center;justify-content:center;color:#021;font-weight:800;cursor:pointer;box-shadow:0 8px 30px rgba(0,0,0,0.5)
+    }
+    .pulsebot .tip {
+      background:rgba(2,8,23,0.9);padding:12px;border-radius:10px;color:var(--muted);max-width:240px;border:1px solid rgba(255,255,255,0.03);font-size:13px;display:none
+    }
+    .pulsebot .tip.visible{display:block}
+
+    footer{padding:36px 0;color:var(--muted);font-size:14px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px}
+
+    @media(max-width:980px){
+      .grid{grid-template-columns:1fr}
+      .hero{flex-direction:column;padding:24px}
+      .container{padding:18px}
+      .pulsebot{right:12px;bottom:12px}
+    }
+  </style>
+</head>
+<body>
+  <div id="particles" style="position:fixed;inset:0;z-index:0;pointer-events:none"></div>
+
+  <div class="container">
+    <header class="topbar" role="banner">
+      <div class="brand">
+        <div class="logo" aria-hidden="true">SP</div>
+        <div>
+          <div style="font-weight:800">SkillPulse</div>
+          <div class="muted" style="font-size:12px;margin-top:2px">Real-time workforce analytics</div>
+        </div>
+      </div>
+      <nav>
+        <a href="#features">Features</a>
+        <a href="#analytics">Analytics</a>
+        <a href="dashboard.html" style="font-weight:700;color:var(--accent1);margin-left:18px">Open Dashboard →</a>
+      </nav>
+    </header>
+
+    <main class="hero" role="main" aria-label="Hero">
+      <video autoplay loop muted playsinline>
+        <source src="https://www.pexels.com/download/video/3129671/" type="video/mp4">
+        Your browser does not support the video tag.
+      </video>
+
+      <div class="left">
+        <span class="muted">Live • 3D • AI-style</span>
+        <h1>Unlock Workforce Potential with Real-Time Skill & Productivity Insights</h1>
+        <p>Explore a 3D skill galaxy, live productivity charts, automated training suggestions, and decision support—designed to surface high-impact actions and deliver measurable improvements.</p>
+
+        <div class="cta" role="group" aria-label="Primary actions">
+          <button id="startDemo" class="btn">Start Live Demo</button>
+          <button id="goDashboard" class="btn alt">Open Dashboard</button>
+        </div>
+
+        <div style="margin-top:18px" class="stats" aria-hidden="false">
+          <div class="stat"><div style="font-weight:800;font-size:18px">52</div><div class="small">Active workers</div></div>
+          <div class="stat"><div style="font-weight:800;font-size:18px">8</div><div class="small">Key skill groups</div></div>
+          <div class="stat"><div style="font-weight:800;font-size:18px">+11%</div><div class="small">Avg productivity (30d)</div></div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Quote bar -->
+    <div class="quote-bar" aria-live="polite">
+      <div class="quote-icon">💡</div>
+      <div id="quoteText" style="font-weight:700">Building skills is the quickest ROI on your future.</div>
+    </div>
+
+    <!-- Features + Join Beta + Testimonials -->
+    <section id="features">
+      <div class="grid">
+        <div class="col-7">
+          <h2>What SkillPulse Does</h2>
+          <div class="card">
+            <div class="features">
+              <div style="margin-bottom:10px">
+                <div style="font-weight:800">Interactive UI</div>
+                <div class="muted">Explore workers and skills as a navigable 3D network. Click nodes to inspect profiles and training recommendations.</div>
+              </div>
+
+              <div style="margin-bottom:10px">
+                <div style="font-weight:800">Real-time Productivity Analytics</div>
+                <div class="muted">Live-updating charts, heatmaps, and trend detection to spot peaks, dips and outliers.</div>
+              </div>
+
+              <div>
+                <div style="font-weight:800">Decision Support Engine</div>
+                <div class="muted">Actionable suggestions for training, rebalancing workload, and role recommendations.</div>
+              </div>
+            </div
+          </div>
+
+          <div style="height:18px"></div>
+
+          <!-- Join Beta -->
+          <div class="card">
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:12px">
+              <div>
+                <div style="font-weight:800">Join SkillPulse Early Access</div>
+                <div class="muted join-note">Enter your email. We'll pretend to accept it and show mock success for demo.</div>
+              </div>
+            </div>
+
+            <div style="margin-top:12px" class="join-beta" aria-label="Join beta form">
+              <input id="betaEmail" type="email" placeholder="you@company.com" aria-label="Email for early access">
+              <button id="joinBetaBtn" class="btn">Join Beta</button>
+            </div>
+
+            <div id="betaMsg" class="muted join-note" aria-live="polite"></div>
+          </div>
+        </div>
+
+        <div class="col-5">
+          <h2>Testimonials</h2>
+          <div class="card">
+            <!-- Swiper -->
+            <div class="swiper mySwiper">
+              <div class="swiper-wrapper">
+                <div class="swiper-slide testimonial">
+                  <div style="font-size:15px">"Reduced onboarding time by 21% using SkillPulse insights."</div>
+                  <div style="margin-top:8px"><div class="t-author">Acme Corp</div><div class="t-role">Head of Talent</div></div>
+                </div>
+                <div class="swiper-slide testimonial">
+                  <div style="font-size:15px">"Real-time analytics helped us reassign resources during peaks."</div>
+                  <div style="margin-top:8px"><div class="t-author">Neon Labs</div><div class="t-role">Product Lead</div></div>
+                </div>
+                <div class="swiper-slide testimonial">
+                  <div style="font-size:15px">"Gamified training suggestions increased completion rates."</div>
+                  <div style="margin-top:8px"><div class="t-author">Orchard</div><div class="t-role">Engineering Manager</div></div>
+                </div>
+              </div>
+              <div class="swiper-pagination"></div>
+            </div>
+
+            <div style="margin-top:12px">
+              <button id="recSmall" class="btn alt">Get Training Suggestion</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Analytics preview (kept small for demo) -->
+    <section id="analytics">
+      <h2>Analytics Preview</h2>
+      <div class="grid">
+        <div class="col-7">
+          <div class="card" style="height:220px;display:flex;flex-direction:column;gap:12px;align-items:center;justify-content:center">
+            <div style="font-weight:800">Live Productivity (mock)</div>
+            <div class="muted">Live updates every few seconds</div>
+          </div>
+        </div>
+        <div class="col-5">
+          <div class="card">
+            <strong>Decision Support</strong>
+            <div class="muted">Auto-generated actions</div>
+            <ul style="margin-top:12px">
+              <li><strong>Train:</strong> Upskill backend engineers on database optimization.</li>
+              <li><strong>Reassign:</strong> Move 1 designer to assist mobile team next sprint.</li>
+              <li><strong>Hire:</strong> Consider 1 QA to reduce testing backlog.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      <div>© SkillPulse </div>
+      <div class="muted">Open Dashboard for full analytics → <a href="dashboard.html" style="color:var(--accent2)">Dashboard</a></div>
+    </footer>
+  </div>
+
+  <!-- PulseBot easter egg -->
+  <div class="pulsebot" aria-hidden="false">
+    <div id="pulseTip" class="tip">Hover nodes to preview profiles. Click a node to open training suggestions.</div>
+    <div id="pulseBtn" class="bubble" title="PulseBot">PB</div>
+  </div>
+
+  <!-- External libs -->
+  <script src="https://cdn.jsdelivr.net/npm/tsparticles@2.12.0/tsparticles.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/swiper@9/swiper-bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+  <script>
+    /* particles */
+    tsParticles.load("particles", {
+      fullScreen:{enable:false, zIndex:0},
+      particles: { number:{value:80}, color:{value:["#7c5cff","#00d4ff","#7ef1c7"]}, opacity:{value:0.12}, move:{speed:0.7}, size:{value:{min:1,max:3}}, links:{enable:true,opacity:0.06} }
+    });
+
+    /* Swiper init (testimonials) */
+    const swiper = new Swiper('.mySwiper', {
+      slidesPerView: 1,
+      loop: true,
+      pagination: { el: '.swiper-pagination', clickable: true },
+      autoplay: { delay: 4500, disableOnInteraction: false },
+    });
+
+    /* Dynamic quotes */
+    const quotes = [
+      "Building skills is the quickest ROI on your future.",
+      "Small daily practice compounds into expertise.",
+      "Data-informed training beats guesswork every time.",
+      "The best teams learn faster than competitors."
+    ];
+    let qi = 0;
+    const qEl = document.getElementById('quoteText');
+    setInterval(()=>{ qi = (qi+1)%quotes.length; qEl.textContent = quotes[qi]; }, 4000);
+
+    /* Join Beta: fake endpoint + localStorage */
+    const joinBtn = document.getElementById('joinBetaBtn');
+    const emailIn = document.getElementById('betaEmail');
+    const betaMsg = document.getElementById('betaMsg');
+    joinBtn.addEventListener('click', ()=>{
+      const email = (emailIn.value || "").trim();
+      if(!email || !/^\S+@\S+\.\S+$/.test(email)){
+        betaMsg.textContent = "Enter a valid email.";
+        return;
+      }
+      // mock network delay
+      joinBtn.disabled = true;
+      joinBtn.textContent = "Joining...";
+      setTimeout(()=>{
+        // store in localStorage as fake capture
+        const saved = JSON.parse(localStorage.getItem('skillpulse_beta')||'[]');
+        saved.push({email, ts: Date.now()});
+        localStorage.setItem('skillpulse_beta', JSON.stringify(saved));
+        betaMsg.textContent = "Thanks — you're on the list. We'll email a mock invite.";
+        joinBtn.textContent = "Joined";
+        joinBtn.disabled = false;
+        confetti({particleCount:80,spread:120,origin:{y:0.6}});
+      },900);
+    });
+
+    /* Quick training suggestion (small demo) */
+    const recSmall = document.getElementById('recSmall');
+    recSmall.addEventListener('click', ()=>{
+      const pool = ['Advanced SQL Patterns','React Performance','Cloud Cost Optimization','Testing Automation Bootcamp','Design Systems Essentials'];
+      const p = ['Coursera','Udemy','Pluralsight','Internal'];
+      const pick = pool[Math.floor(Math.random()*pool.length)];
+      alert(`Suggested: ${pick}\nPlatform: ${p[Math.floor(Math.random()*p.length)]}\nDuration: ${(3+Math.floor(Math.random()*6))} weeks`);
+    });
+
+    /* PulseBot behavior */
+    const pulseBtn = document.getElementById('pulseBtn');
+    const pulseTip = document.getElementById('pulseTip');
+    let tipTimeout = null;
+    pulseBtn.addEventListener('mouseenter', ()=> {
+      pulseTip.classList.add('visible');
+      if(tipTimeout) clearTimeout(tipTimeout);
+    });
+    pulseBtn.addEventListener('mouseleave', ()=> {
+      tipTimeout = setTimeout(()=>pulseTip.classList.remove('visible'), 1200);
+    });
+    pulseBtn.addEventListener('click', ()=> {
+      // toggles a small contextual help message
+      if(pulseTip.classList.contains('visible')){
+        pulseTip.textContent = "Tip: Try 'Get Training Suggestion' for quick mock plans. You can join beta with your email.";
+      } else {
+        pulseTip.textContent = "Hover nodes to preview profiles. Click a node to open training suggestions.";
+      }
+      pulseTip.classList.add('visible');
+      setTimeout(()=>pulseTip.classList.remove('visible'), 6000);
+    });
+
+    /* Accessibility: focus outlines for keyboard users */
+    document.addEventListener('keydown', (e)=>{
+      if(e.key === 'Tab') document.body.classList.add('show-focus');
+    });
+  </script>
+</body>
+</html>
